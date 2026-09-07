@@ -49,6 +49,53 @@ function save_recipes(array $recipes): bool
     return file_put_contents(RECIPES_FILE, $json . PHP_EOL, LOCK_EX) !== false;
 }
 
+function slugify(string $value): string
+{
+    $value = trim(strtolower($value));
+
+    if (function_exists('iconv')) {
+        $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+        if ($converted !== false) {
+            $value = $converted;
+        }
+    }
+
+    $value = preg_replace('/[^a-z0-9]+/', '-', $value) ?? '';
+    return trim($value, '-') ?: 'recipe';
+}
+
+function unique_slug(string $title, ?string $currentId = null): string
+{
+    $base = slugify($title);
+    $slug = $base;
+    $suffix = 2;
+    $recipes = load_recipes();
+
+    while (true) {
+        $conflict = false;
+
+        foreach ($recipes as $recipe) {
+            if (($recipe['slug'] ?? '') === $slug && ($recipe['id'] ?? '') !== $currentId) {
+                $conflict = true;
+                break;
+            }
+        }
+
+        if (!$conflict) {
+            return $slug;
+        }
+
+        $slug = $base . '-' . $suffix;
+        $suffix++;
+    }
+}
+
+function split_lines(string $value): array
+{
+    $lines = preg_split('/\R/u', trim($value)) ?: [];
+    return array_values(array_filter(array_map('trim', $lines), static fn($line) => $line !== ''));
+}
+
 function recipe_browse_options(): array
 {
     return [
