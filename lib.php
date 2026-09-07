@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 session_start();
 
-const RECIPES_FILE = __DIR__ . '/data/recipes.json';
+const LEGACY_RECIPES_FILE = __DIR__ . '/data/recipes.json';
 const UPLOADS_DIR = __DIR__ . '/uploads';
 
 function config(): array
@@ -12,6 +12,7 @@ function config(): array
     $defaults = [
         'admin_password' => '',
         'site_name' => 'Elixir Recipes',
+        'recipes_file' => '',
     ];
 
     $path = __DIR__ . '/config.local.php';
@@ -28,25 +29,81 @@ function h(?string $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+function recipe_data_file(): string
+{
+    $configured = trim((string) (config()['recipes_file'] ?? ''));
+    if ($configured !== '') {
+        return $configured;
+    }
+
+    $persistentDir = dirname(__DIR__) . '/elixir-recipes-storage';
+    if ((is_dir($persistentDir) || @mkdir($persistentDir, 0775, true)) && is_writable($persistentDir)) {
+        return $persistentDir . '/recipes.json';
+    }
+
+    return __DIR__ . '/data/recipes.runtime.json';
+}
+
+function migrate_legacy_recipes_if_needed(): void
+{
+    $target = recipe_data_file();
+    if (is_file($target)) {
+        return;
+    }
+
+    $targetDir = dirname($target);
+    if (!is_dir($targetDir)) {
+        @mkdir($targetDir, 0775, true);
+    }
+
+    if (is_file(LEGACY_RECIPES_FILE)) {
+        $legacy = file_get_contents(LEGACY_RECIPES_FILE);
+        $decoded = json_decode($legacy ?: '[]', true);
+        if (is_array($decoded) && count($decoded) > 0) {
+            @file_put_contents($target, json_encode(array_values($decoded), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . PHP_EOL, LOCK_EX);
+            return;
+        }
+    }
+
+    @file_put_contents($target, "[]\n", LOCK_EX);
+}
+
 function load_recipes(): array
 {
-    if (!is_file(RECIPES_FILE)) {
+    migrate_legacy_recipes_if_needed();
+    $file = recipe_data_file();
+    if (!is_file($file)) {
         return [];
     }
 
-    $json = file_get_contents(RECIPES_FILE);
+    $json = file_get_contents($file);
     $data = json_decode($json ?: '[]', true);
     return is_array($data) ? $data : [];
 }
 
 function save_recipes(array $recipes): bool
 {
-    if (!is_dir(dirname(RECIPES_FILE))) {
-        mkdir(dirname(RECIPES_FILE), 0775, true);
+    $file = recipe_data_file();
+    if (!is_dir(dirname($file))) {
+        mkdir(dirname($file), 0775, true);
     }
 
     $json = json_encode(array_values($recipes), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-    return file_put_contents(RECIPES_FILE, $json . PHP_EOL, LOCK_EX) !== false;
+    if ($json === false) {
+        return false;
+    }
+
+    $temp = $file . '.tmp';
+    if (file_put_contents($temp, $json . PHP_EOL, LOCK_EX) === false) {
+        return false;
+    }
+
+    if (!@rename($temp, $file)) {
+        @unlink($temp);
+        return false;
+    }
+
+    return true;
 }
 
 function slugify(string $value): string
