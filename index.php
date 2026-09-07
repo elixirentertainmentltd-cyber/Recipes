@@ -68,7 +68,8 @@ $siteName = (string) (config()['site_name'] ?? 'Elixir Recipes');
     <a href="#recipes">Recipes</a>
     <a href="#browse">Browse</a>
     <a href="#about">About</a>
-    <a class="nav-cta" href="/admin.php">Add a recipe</a>
+    <?php if (is_admin()): ?><a href="/admin.php">Manage recipes</a><?php endif; ?>
+    <a class="nav-cta" href="/admin.php"><?= is_admin() ? 'Add or edit recipes' : 'Add a recipe' ?></a>
   </nav>
 </header>
 
@@ -134,7 +135,10 @@ $siteName = (string) (config()['site_name'] ?? 'Elixir Recipes');
             <p class="card-kicker"><?= total_time($recipe) ?> min · <?= h((string) ($recipe['servings'] ?? '')) ?> servings<?= !empty($recipe['cuisine']) ? ' · ' . h($recipe['cuisine']) : '' ?></p>
             <h3><a href="<?= h(recipe_url($recipe)) ?>"><?= h($recipe['title'] ?? '') ?></a></h3>
             <p><?= h($recipe['summary'] ?? '') ?></p>
-            <a class="text-link" href="<?= h(recipe_url($recipe)) ?>">Make this <span aria-hidden="true">→</span></a>
+            <div class="hero-actions" style="margin-top:18px">
+              <a class="text-link" href="<?= h(recipe_url($recipe)) ?>">Make this <span aria-hidden="true">→</span></a>
+              <?php if (is_admin()): ?><a class="text-link" href="/admin.php?edit=<?= h($recipe['id'] ?? '') ?>">Edit <span aria-hidden="true">↗</span></a><?php endif; ?>
+            </div>
           </div>
         </article>
       <?php endforeach; ?>
