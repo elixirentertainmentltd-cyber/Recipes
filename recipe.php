@@ -7,6 +7,33 @@ if (!$recipe) {
     http_response_code(404);
 }
 $siteName = (string) (config()['site_name'] ?? 'Elixir Recipes');
+
+$ingredientLines = $recipe['ingredients'] ?? [];
+$isIngredientHeading = static function (array $ingredients, int $index): bool {
+    $line = trim((string) ($ingredients[$index] ?? ''));
+    if ($line === '') {
+        return false;
+    }
+
+    if (str_starts_with($line, '## ')) {
+        return true;
+    }
+
+    if (str_ends_with($line, ':')) {
+        return true;
+    }
+
+    if (mb_strlen($line) > 55 || preg_match('/\d/u', $line)) {
+        return false;
+    }
+
+    if (preg_match('/\b(pinch|handful|few|zest|juice|clove|cloves|sprig|sprigs|slice|slices|can|tin|pack|bunch|dash|drizzle|to taste|optional)\b/i', $line)) {
+        return false;
+    }
+
+    $next = trim((string) ($ingredients[$index + 1] ?? ''));
+    return $next !== '' && preg_match('/^[\d¼½¾⅓⅔⅛⅜⅝⅞]/u', $next) === 1;
+};
 ?>
 <!doctype html>
 <html lang="en">
@@ -29,7 +56,7 @@ $siteName = (string) (config()['site_name'] ?? 'Elixir Recipes');
 <div class="recipe-hero-image reveal"><?php if (!empty($recipe['image'])): ?><img src="<?= h($recipe['image']) ?>" alt="<?= h($recipe['title'] ?? '') ?>"><?php else: ?><div class="recipe-placeholder large"><span>✦</span></div><?php endif; ?></div>
 </section>
 <section class="recipe-content shell">
-<aside class="ingredients-card reveal"><p class="section-number">Ingredients</p><h2>What you need</h2><ul><?php foreach (($recipe['ingredients'] ?? []) as $ingredient): ?><li><?= h($ingredient) ?></li><?php endforeach; ?></ul></aside>
+<aside class="ingredients-card reveal"><p class="section-number">Ingredients</p><h2>What you need</h2><ul><?php foreach ($ingredientLines as $ingredientIndex => $ingredient): ?><?php if ($isIngredientHeading($ingredientLines, $ingredientIndex)): ?><?php $heading = preg_replace('/^##\s*/', '', trim((string) $ingredient)); ?><li style="padding:24px 0 8px;border-bottom:0"><strong style="font-family:Syne,Manrope,sans-serif;font-size:1.08rem;letter-spacing:-.02em"><?= h(rtrim((string) $heading, ':')) ?></strong></li><?php else: ?><li><?= h($ingredient) ?></li><?php endif; ?><?php endforeach; ?></ul></aside>
 <div class="method-card reveal"><p class="section-number">Method</p><h2>Make it happen</h2><ol><?php foreach (($recipe['method'] ?? []) as $step): ?><li><span><?= h(str_pad((string) (($loopIndex ?? 0) + 1), 2, '0', STR_PAD_LEFT)) ?></span><p><?= h($step) ?></p></li><?php $loopIndex = ($loopIndex ?? 0) + 1; endforeach; ?></ol><?php if (!empty($recipe['notes'])): ?><div class="cook-note"><strong>Cook's note</strong><p><?= nl2br(h($recipe['notes'])) ?></p></div><?php endif; ?></div>
 </section>
 <?php if (!empty($recipe['tags'])): ?><div class="shell tags-row"><?php foreach ($recipe['tags'] as $tag): ?><span>#<?= h($tag) ?></span><?php endforeach; ?></div><?php endif; ?>
