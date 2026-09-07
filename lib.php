@@ -49,51 +49,42 @@ function save_recipes(array $recipes): bool
     return file_put_contents(RECIPES_FILE, $json . PHP_EOL, LOCK_EX) !== false;
 }
 
-function slugify(string $value): string
+function recipe_browse_options(): array
 {
-    $value = trim(strtolower($value));
-    if (function_exists('iconv')) {
-        $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
-        if ($converted !== false) {
-            $value = $converted;
-        }
-    }
-    $value = preg_replace('/[^a-z0-9]+/', '-', $value) ?? '';
-    return trim($value, '-') ?: 'recipe';
+    return [
+        'category' => [
+            'Breakfast', 'Brunch', 'Lunch', 'Dinner', 'Starter', 'Main course', 'Side dish',
+            'Dessert', 'Baking', 'Snack', 'Soup', 'Salad', 'Sandwich', 'Pasta', 'Curry',
+            'Pie', 'One-pot', 'Slow cooker', 'Air fryer', 'Drinks',
+        ],
+        'cuisine' => [
+            'British', 'Italian', 'Indian', 'Chinese', 'Mexican', 'Thai', 'Mediterranean',
+            'American', 'French', 'Japanese', 'Middle Eastern', 'Spanish', 'Greek',
+        ],
+        'diet' => [
+            'Vegetarian', 'Vegan', 'Gluten-free', 'Dairy-free', 'Healthy', 'High-protein',
+            'Low-calorie', 'Family-friendly',
+        ],
+        'occasion' => [
+            'Quick & easy', 'Weeknight', 'Family meal', 'Batch cooking', 'Budget', 'Party food',
+            'BBQ', 'Picnic', 'Date night', 'Christmas', 'Easter', 'Halloween',
+        ],
+    ];
 }
 
-function unique_slug(string $title, ?string $currentId = null): string
+function recipe_browse_labels(): array
 {
-    $base = slugify($title);
-    $slug = $base;
-    $i = 2;
-    $recipes = load_recipes();
-
-    while (true) {
-        $conflict = false;
-        foreach ($recipes as $recipe) {
-            if (($recipe['slug'] ?? '') === $slug && ($recipe['id'] ?? '') !== $currentId) {
-                $conflict = true;
-                break;
-            }
-        }
-        if (!$conflict) {
-            return $slug;
-        }
-        $slug = $base . '-' . $i;
-        $i++;
-    }
-}
-
-function split_lines(string $value): array
-{
-    $lines = preg_split('/\R/u', trim($value)) ?: [];
-    return array_values(array_filter(array_map('trim', $lines), static fn($line) => $line !== ''));
+    return [
+        'category' => 'Dish type',
+        'cuisine' => 'Cuisine',
+        'diet' => 'Diet & lifestyle',
+        'occasion' => 'Occasion',
+    ];
 }
 
 function recipe_categories(array $recipes): array
 {
-    $categories = [];
+    $categories = array_fill_keys(recipe_browse_options()['category'], true);
     foreach ($recipes as $recipe) {
         $category = trim((string) ($recipe['category'] ?? ''));
         if ($category !== '') {
