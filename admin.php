@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/lib.php';
+require __DIR__ . '/import-lib.php';
 
 $message = '';
 $error = '';
@@ -43,6 +44,7 @@ if (is_admin() && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? 
         $error = 'Your session expired. Please try again.';
     } else {
         try {
+            $storeLock = recipe_store_lock();
             $id = trim((string) ($_POST['id'] ?? ''));
             $existing = $id !== '' ? recipe_by_id($id) : null;
             $title = trim((string) ($_POST['title'] ?? ''));
@@ -103,6 +105,8 @@ if (is_admin() && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? 
             exit;
         } catch (Throwable $e) {
             $error = $e->getMessage();
+        } finally {
+            if (isset($storeLock) && is_resource($storeLock)) { flock($storeLock, LOCK_UN); fclose($storeLock); }
         }
     }
 }
@@ -111,6 +115,7 @@ if (is_admin() && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? 
     if (!valid_csrf($_POST['csrf'] ?? null)) {
         $error = 'Your session expired. Please try again.';
     } else {
+        $deleteLock = recipe_store_lock();
         $id = trim((string) ($_POST['id'] ?? ''));
         $recipes = load_recipes();
         $target = recipe_by_id($id);
@@ -146,7 +151,7 @@ $editCustomTags = array_values(array_diff($editTags, $presetTags));
 <?php elseif (!is_admin()): ?>
 <section class="admin-login"><p class="eyebrow"><span></span> Recipe admin</p><h1>Welcome back, <span class="rainbow-text">chef.</span></h1><p>Sign in to add, edit or remove recipes.</p><?php if ($error): ?><div class="alert error"><?= h($error) ?></div><?php endif; ?><form method="post" class="login-form"><input type="hidden" name="action" value="login"><input type="hidden" name="csrf" value="<?= h(csrf_token()) ?>"><label><span>Password</span><input type="password" name="password" required autocomplete="current-password"></label><button class="button button-primary" type="submit">Sign in</button></form></section>
 <?php else: ?>
-<div class="admin-heading"><div><p class="section-number">Recipe manager</p><h1><?= $edit ? 'Edit recipe' : 'Add a new recipe' ?></h1><p>Choose the built-in recipe categories, tags, then add the ingredients and method.</p></div><?php if ($edit): ?><a class="button button-ghost" href="/admin.php">Cancel edit</a><?php endif; ?></div>
+<div class="admin-heading"><div><p class="section-number">Recipe manager</p><h1><?= $edit ? 'Edit recipe' : 'Add a new recipe' ?></h1><a class="button button-ghost" href="/bulk-import.php">Bulk Import Recipes</a><p>Choose the built-in recipe categories, tags, then add the ingredients and method.</p></div><?php if ($edit): ?><a class="button button-ghost" href="/admin.php">Cancel edit</a><?php endif; ?></div>
 <?php if ($message): ?><div class="alert success"><?= h($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert error"><?= h($error) ?></div><?php endif; ?>
 <div class="admin-grid">
 <form class="recipe-form" method="post" enctype="multipart/form-data"><input type="hidden" name="action" value="save"><input type="hidden" name="csrf" value="<?= h(csrf_token()) ?>"><input type="hidden" name="id" value="<?= h($edit['id'] ?? '') ?>">

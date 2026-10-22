@@ -15,8 +15,10 @@ jobs:
           extensions: mbstring, fileinfo
           coverage: none
       - name: Check PHP syntax
-        run: for file in *.php; do php -l "$file" || exit 1; done
+        run: for file in *.php api/*.php tests/*.php; do php -l "$file" || exit 1; done
       - name: Render pages with disposable recipes
         run: python3 tests/render.py
+      - name: Validate imports and API access
+        run: python3 tests/import.py
       - name: Check JavaScript syntax
         run: node --check script.js
