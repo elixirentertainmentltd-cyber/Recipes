@@ -1,0 +1,174 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "You Batter Believe It Recipe Import",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://recipes.weareelixir.co.uk"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "importKey": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "paths": {
+    "/api/import-recipes.php": {
+      "post": {
+        "operationId": "bulkImportRecipes",
+        "summary": "Preview or add up to 100 recipes",
+        "description": "Preview first with dry_run true. Only publish with dry_run false when authorised. Duplicate titles are skipped. Images: image_url must be HTTPS; image_base64 is raw JPG/PNG/WebP up to 2 MB decoded. Choose only one image field. Batch maximum 20 MB.",
+        "x-openai-isConsequential": true,
+        "security": [
+          {
+            "importKey": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "recipes"
+                ],
+                "properties": {
+                  "dry_run": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "recipes": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "title",
+                        "category",
+                        "ingredients",
+                        "instructions"
+                      ],
+                      "properties": {
+                        "title": {
+                          "type": "string"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "Breakfast",
+                            "Brunch",
+                            "Lunch",
+                            "Dinner",
+                            "Starter",
+                            "Main course",
+                            "Side dish",
+                            "Dessert",
+                            "Baking",
+                            "Snack",
+                            "Soup",
+                            "Salad",
+                            "Sandwich",
+                            "Pasta",
+                            "Curry",
+                            "Pie",
+                            "One-pot",
+                            "Slow cooker",
+                            "Air fryer",
+                            "Drinks"
+                          ]
+                        },
+                        "cuisine": {
+                          "type": "string"
+                        },
+                        "occasion": {
+                          "type": "string"
+                        },
+                        "notes": {
+                          "type": "string"
+                        },
+                        "image_url": {
+                          "type": "string"
+                        },
+                        "image_base64": {
+                          "type": "string"
+                        },
+                        "ingredients": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "instructions": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "prep_minutes": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "cook_minutes": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "servings": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Preview/import results: ready, added, skipped, skipped_titles, backup_created"
+          },
+          "401": {
+            "description": "Import key required"
+          },
+          "403": {
+            "description": "HTTPS required"
+          },
+          "405": {
+            "description": "POST required"
+          },
+          "413": {
+            "description": "Request too large"
+          },
+          "415": {
+            "description": "JSON required"
+          },
+          "422": {
+            "description": "Invalid batch"
+          },
+          "500": {
+            "description": "Storage or backup failure"
+          }
+        }
+      }
+    }
+  }
+}
