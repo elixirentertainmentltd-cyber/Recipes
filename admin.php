@@ -138,9 +138,9 @@ $editTags = $edit['tags'] ?? [];
 $editPresetTags = array_values(array_intersect($presetTags, $editTags));
 $editCustomTags = array_values(array_diff($editTags, $presetTags));
 ?>
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#070707"><title>Recipe Admin | Elixir Recipes</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/styles.css?v=2"></head><body class="admin-body">
-<header class="site-header"><a class="brand" href="/"><img src="/assets/elixir-recipes-logo.webp" alt="Elixir Recipes" width="220" height="110"></a><nav class="site-nav admin-nav"><a href="/">View site</a><?php if (is_admin()): ?><a class="nav-cta" href="/admin.php?logout=1">Sign out</a><?php endif; ?></nav></header>
-<main class="admin-main shell">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#070707"><title>Recipe Admin | Elixir Recipes</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/styles.css?v=3"></head><body class="admin-body"><a class="skip-link" href="#main-content">Skip to main content</a>
+<?php require __DIR__ . '/site-header.php'; ?>
+<main id="main-content" class="admin-main shell">
 <?php if (!admin_configured()): ?>
 <section class="admin-login"><p class="eyebrow"><span></span> Setup required</p><h1>One tiny <span class="rainbow-text">setup step.</span></h1><p>Copy <code>config.example.php</code> to <code>config.local.php</code>, then replace <code>CHANGE_ME</code> with a strong admin password. The public recipe site already works without this.</p></section>
 <?php elseif (!is_admin()): ?>
@@ -164,4 +164,5 @@ $editCustomTags = array_values(array_diff($editTags, $presetTags));
 <aside class="recipe-list"><div class="recipe-list-head"><p class="card-kicker">Your recipe book</p><strong><?= count($recipes) ?> recipe<?= count($recipes) === 1 ? '' : 's' ?></strong></div><?php if (!$recipes): ?><p class="muted-copy">Nothing here yet. Your first recipe will appear here after you publish it.</p><?php endif; ?><?php foreach ($recipes as $recipe): ?><div class="admin-recipe-card"><?php if (!empty($recipe['image'])): ?><img src="<?= h($recipe['image']) ?>" alt="" loading="lazy"><?php else: ?><span class="mini-placeholder">✦</span><?php endif; ?><div><small><?= h($recipe['category'] ?? 'Recipe') ?><?= !empty($recipe['cuisine']) ? ' · ' . h($recipe['cuisine']) : '' ?></small><strong><?= h($recipe['title'] ?? '') ?></strong><div class="admin-recipe-actions"><a href="<?= h(recipe_url($recipe)) ?>">View</a><a href="/admin.php?edit=<?= h($recipe['id'] ?? '') ?>">Edit</a><form method="post" onsubmit="return confirm('Delete this recipe?');"><input type="hidden" name="action" value="delete"><input type="hidden" name="csrf" value="<?= h(csrf_token()) ?>"><input type="hidden" name="id" value="<?= h($recipe['id'] ?? '') ?>"><button type="submit">Delete</button></form></div></div></div><?php endforeach; ?></aside>
 </div>
 <?php endif; ?>
-</main><script src="/script.js?v=1"></script></body></html>
+</main><?php require __DIR__ . '/site-footer.php'; ?><script src="/script.js?v=2"></script></body></html>
+
