@@ -161,18 +161,6 @@ function recipe_browse_options(): array
             'Dessert', 'Baking', 'Snack', 'Soup', 'Salad', 'Sandwich', 'Pasta', 'Curry',
             'Pie', 'One-pot', 'Slow cooker', 'Air fryer', 'Drinks',
         ],
-        'cuisine' => [
-            'British', 'Italian', 'Indian', 'Chinese', 'Mexican', 'Thai', 'Mediterranean',
-            'American', 'French', 'Japanese', 'Middle Eastern', 'Spanish', 'Greek',
-        ],
-        'diet' => [
-            'Vegetarian', 'Vegan', 'Gluten-free', 'Dairy-free', 'Healthy', 'High-protein',
-            'Low-calorie', 'Family-friendly',
-        ],
-        'occasion' => [
-            'Quick & easy', 'Weeknight', 'Family meal', 'Batch cooking', 'Budget', 'Party food',
-            'BBQ', 'Picnic', 'Date night', 'Christmas', 'Easter', 'Halloween',
-        ],
     ];
 }
 
@@ -180,9 +168,6 @@ function recipe_browse_labels(): array
 {
     return [
         'category' => 'Dish type',
-        'cuisine' => 'Cuisine',
-        'diet' => 'Diet & lifestyle',
-        'occasion' => 'Occasion',
     ];
 }
 
@@ -317,3 +302,4 @@ function recipe_by_id(string $id): ?array
     }
     return null;
 }
+

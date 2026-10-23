@@ -5,23 +5,6 @@ require __DIR__ . '/import-lib.php';
 $message = '';
 $error = '';
 
-$presetTags = [
-    'Dairy-free',
-    'Gluten-free',
-    'Vegan',
-    'Vegetarian',
-    'Egg-free',
-    'Nut-free',
-    'Soy-free',
-    'Low-sugar',
-    'High-protein',
-    'Healthy',
-    'Family-friendly',
-    'Freezer-friendly',
-    'Quick & easy',
-    'Budget-friendly',
-];
-
 if (isset($_GET['logout'])) {
     logout_admin();
     header('Location: /admin.php');
@@ -52,35 +35,24 @@ if (is_admin() && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? 
                 throw new RuntimeException('Give the recipe a title.');
             }
 
-            $customTags = array_values(array_filter(array_map('trim', explode(',', (string) ($_POST['tags'] ?? '')))));
-            $selectedPresetTags = $_POST['preset_tags'] ?? [];
-            if (!is_array($selectedPresetTags)) {
-                $selectedPresetTags = [];
-            }
-            $selectedPresetTags = array_values(array_intersect($presetTags, array_map('strval', $selectedPresetTags)));
-            $allTags = array_values(array_unique(array_merge($selectedPresetTags, $customTags)));
-
             $image = upload_recipe_image($_FILES['image'] ?? [], $existing['image'] ?? null);
-            $recipe = [
+            $recipe = array_merge($existing ?? [], [
                 'id' => $existing['id'] ?? bin2hex(random_bytes(8)),
                 'slug' => unique_slug($title, $existing['id'] ?? null),
                 'title' => $title,
                 'summary' => trim((string) ($_POST['summary'] ?? '')),
                 'category' => trim((string) ($_POST['category'] ?? '')) ?: 'Main course',
-                'cuisine' => trim((string) ($_POST['cuisine'] ?? '')),
                 'diet' => $existing['diet'] ?? '',
-                'occasion' => trim((string) ($_POST['occasion'] ?? '')),
                 'prep_minutes' => max(0, (int) ($_POST['prep_minutes'] ?? 0)),
                 'cook_minutes' => max(0, (int) ($_POST['cook_minutes'] ?? 0)),
                 'servings' => max(1, (int) ($_POST['servings'] ?? 1)),
                 'ingredients' => split_lines((string) ($_POST['ingredients'] ?? '')),
                 'method' => split_lines((string) ($_POST['method'] ?? '')),
                 'notes' => trim((string) ($_POST['notes'] ?? '')),
-                'tags' => $allTags,
                 'image' => $image,
                 'created_at' => $existing['created_at'] ?? gmdate('c'),
                 'updated_at' => gmdate('c'),
-            ];
+            ]);
 
             if (!$recipe['ingredients'] || !$recipe['method']) {
                 throw new RuntimeException('Add at least one ingredient and one method step.');
@@ -139,11 +111,8 @@ $edit = is_admin() && !empty($_GET['edit']) ? recipe_by_id((string) $_GET['edit'
 $recipes = is_admin() ? load_recipes() : [];
 usort($recipes, static fn($a, $b) => strcmp((string) ($b['updated_at'] ?? ''), (string) ($a['updated_at'] ?? '')));
 $browseOptions = recipe_browse_options();
-$editTags = $edit['tags'] ?? [];
-$editPresetTags = array_values(array_intersect($presetTags, $editTags));
-$editCustomTags = array_values(array_diff($editTags, $presetTags));
 ?>
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#070707"><title>Recipe Admin | Elixir Recipes</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/styles.css?v=3"></head><body class="admin-body"><a class="skip-link" href="#main-content">Skip to main content</a>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#070707"><title>Recipe Admin | Elixir Recipes</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/styles.css?v=5-simple-browsing"></head><body class="admin-body"><a class="skip-link" href="#main-content">Skip to main content</a>
 <?php require __DIR__ . '/site-header.php'; ?>
 <main id="main-content" class="admin-main shell">
 <?php if (!admin_configured()): ?>
@@ -151,23 +120,21 @@ $editCustomTags = array_values(array_diff($editTags, $presetTags));
 <?php elseif (!is_admin()): ?>
 <section class="admin-login"><p class="eyebrow"><span></span> Recipe admin</p><h1>Welcome back, <span class="rainbow-text">chef.</span></h1><p>Sign in to add, edit or remove recipes.</p><?php if ($error): ?><div class="alert error"><?= h($error) ?></div><?php endif; ?><form method="post" class="login-form"><input type="hidden" name="action" value="login"><input type="hidden" name="csrf" value="<?= h(csrf_token()) ?>"><label><span>Password</span><input type="password" name="password" required autocomplete="current-password"></label><button class="button button-primary" type="submit">Sign in</button></form></section>
 <?php else: ?>
-<div class="admin-heading"><div><p class="section-number">Recipe manager</p><h1><?= $edit ? 'Edit recipe' : 'Add a new recipe' ?></h1><a class="button button-ghost" href="/bulk-import.php">Bulk Import Recipes</a><p>Choose the built-in recipe categories, tags, then add the ingredients and method.</p></div><?php if ($edit): ?><a class="button button-ghost" href="/admin.php">Cancel edit</a><?php endif; ?></div>
+<div class="admin-heading"><div><p class="section-number">Recipe manager</p><h1><?= $edit ? 'Edit recipe' : 'Add a new recipe' ?></h1><a class="button button-ghost" href="/bulk-import.php">Bulk Import Recipes</a><p>Choose a dish type, then add the ingredients and method.</p></div><?php if ($edit): ?><a class="button button-ghost" href="/admin.php">Cancel edit</a><?php endif; ?></div>
 <?php if ($message): ?><div class="alert success"><?= h($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert error"><?= h($error) ?></div><?php endif; ?>
 <div class="admin-grid">
 <form class="recipe-form" method="post" enctype="multipart/form-data"><input type="hidden" name="action" value="save"><input type="hidden" name="csrf" value="<?= h(csrf_token()) ?>"><input type="hidden" name="id" value="<?= h($edit['id'] ?? '') ?>">
 <div class="form-section"><p class="card-kicker">The basics</p><div class="field-grid"><label class="full"><span>Recipe title</span><input name="title" required value="<?= h($edit['title'] ?? '') ?>" placeholder="Sticky toffee pudding"></label><label class="full"><span>Short description</span><textarea name="summary" rows="3" placeholder="What makes this one worth cooking?"><?= h($edit['summary'] ?? '') ?></textarea></label>
 <label><span>Dish type</span><select name="category" required><?php foreach ($browseOptions['category'] as $item): ?><option value="<?= h($item) ?>" <?= ($edit['category'] ?? 'Main course') === $item ? 'selected' : '' ?>><?= h($item) ?></option><?php endforeach; ?></select></label>
-<label><span>Cuisine</span><select name="cuisine"><option value="">Not set</option><?php foreach ($browseOptions['cuisine'] as $item): ?><option value="<?= h($item) ?>" <?= ($edit['cuisine'] ?? '') === $item ? 'selected' : '' ?>><?= h($item) ?></option><?php endforeach; ?></select></label>
-<label class="full"><span>Occasion</span><select name="occasion"><option value="">Not set</option><?php foreach ($browseOptions['occasion'] as $item): ?><option value="<?= h($item) ?>" <?= ($edit['occasion'] ?? '') === $item ? 'selected' : '' ?>><?= h($item) ?></option><?php endforeach; ?></select></label>
-<div class="full"><span class="field-label">Recipe tags</span><p class="muted-copy">Select as many as apply.</p><div class="tag-checkbox-grid" style="display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center;"><?php foreach ($presetTags as $tag): ?><label class="tag-checkbox" style="display:inline-flex;align-items:center;gap:8px;width:auto;margin:0;padding:9px 12px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:#111114;cursor:pointer;"><input type="checkbox" name="preset_tags[]" value="<?= h($tag) ?>" <?= in_array($tag, $editPresetTags, true) ? 'checked' : '' ?> style="width:auto;min-width:16px;margin:0;padding:0;"><span style="white-space:nowrap;"><?= h($tag) ?></span></label><?php endforeach; ?></div></div>
-<label class="full"><span>Other tags</span><input name="tags" value="<?= h(implode(', ', $editCustomTags)) ?>" placeholder="chocolate, cheesecake, summer"></label></div></div>
+</div></div>
 <div class="form-section"><p class="card-kicker">Timing</p><div class="field-grid thirds"><label><span>Prep minutes</span><input type="number" min="0" name="prep_minutes" value="<?= h((string) ($edit['prep_minutes'] ?? 10)) ?>"></label><label><span>Cook minutes</span><input type="number" min="0" name="cook_minutes" value="<?= h((string) ($edit['cook_minutes'] ?? 20)) ?>"></label><label><span>Servings</span><input type="number" min="1" name="servings" value="<?= h((string) ($edit['servings'] ?? 4)) ?>"></label></div></div>
 <div class="form-section"><p class="card-kicker">The good stuff</p><label><span>Ingredients, one per line</span><textarea name="ingredients" rows="10" required placeholder="250g flour&#10;2 eggs&#10;200ml milk"><?= h(implode("\n", $edit['ingredients'] ?? [])) ?></textarea></label><label><span>Method, one step per line</span><textarea name="method" rows="10" required placeholder="Heat the oven to 180°C.&#10;Mix the dry ingredients.&#10;Bake until golden."><?= h(implode("\n", $edit['method'] ?? [])) ?></textarea></label><label><span>Cook's note</span><textarea name="notes" rows="4"><?= h($edit['notes'] ?? '') ?></textarea></label></div>
 <div class="form-section"><p class="card-kicker">Picture</p><label class="upload-field"><span>Recipe image</span><input type="file" name="image" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG or WebP. Maximum 8 MB.</small></label><?php if (!empty($edit['image'])): ?><img class="admin-image-preview" src="<?= h($edit['image']) ?>" alt="Current recipe image"><?php endif; ?></div>
 <button class="button button-primary" type="submit"><?= $edit ? 'Save changes' : 'Publish recipe' ?> <span aria-hidden="true">↗</span></button>
 </form>
-<aside class="recipe-list"><div class="recipe-list-head"><p class="card-kicker">Your recipe book</p><strong><?= count($recipes) ?> recipe<?= count($recipes) === 1 ? '' : 's' ?></strong></div><?php if (!$recipes): ?><p class="muted-copy">Nothing here yet. Your first recipe will appear here after you publish it.</p><?php endif; ?><?php foreach ($recipes as $recipe): ?><div class="admin-recipe-card"><?php if (!empty($recipe['image'])): ?><img src="<?= h($recipe['image']) ?>" alt="" loading="lazy"><?php else: ?><span class="mini-placeholder">✦</span><?php endif; ?><div><small><?= h($recipe['category'] ?? 'Recipe') ?><?= !empty($recipe['cuisine']) ? ' · ' . h($recipe['cuisine']) : '' ?></small><strong><?= h($recipe['title'] ?? '') ?></strong><div class="admin-recipe-actions"><a href="<?= h(recipe_url($recipe)) ?>">View</a><a href="/admin.php?edit=<?= h($recipe['id'] ?? '') ?>">Edit</a><form method="post" onsubmit="return confirm('Delete this recipe?');"><input type="hidden" name="action" value="delete"><input type="hidden" name="csrf" value="<?= h(csrf_token()) ?>"><input type="hidden" name="id" value="<?= h($recipe['id'] ?? '') ?>"><button type="submit">Delete</button></form></div></div></div><?php endforeach; ?></aside>
+<aside class="recipe-list"><div class="recipe-list-head"><p class="card-kicker">Your recipe book</p><strong><?= count($recipes) ?> recipe<?= count($recipes) === 1 ? '' : 's' ?></strong></div><?php if (!$recipes): ?><p class="muted-copy">Nothing here yet. Your first recipe will appear here after you publish it.</p><?php endif; ?><?php foreach ($recipes as $recipe): ?><div class="admin-recipe-card"><?php if (!empty($recipe['image'])): ?><img src="<?= h($recipe['image']) ?>" alt="" loading="lazy"><?php else: ?><span class="mini-placeholder">✦</span><?php endif; ?><div><small><?= h($recipe['category'] ?? 'Recipe') ?></small><strong><?= h($recipe['title'] ?? '') ?></strong><div class="admin-recipe-actions"><a href="<?= h(recipe_url($recipe)) ?>">View</a><a href="/admin.php?edit=<?= h($recipe['id'] ?? '') ?>">Edit</a><form method="post" onsubmit="return confirm('Delete this recipe?');"><input type="hidden" name="action" value="delete"><input type="hidden" name="csrf" value="<?= h(csrf_token()) ?>"><input type="hidden" name="id" value="<?= h($recipe['id'] ?? '') ?>"><button type="submit">Delete</button></form></div></div></div><?php endforeach; ?></aside>
 </div>
 <?php endif; ?>
 </main><?php require __DIR__ . '/site-footer.php'; ?><script src="/script.js?v=2"></script></body></html>
+
 
