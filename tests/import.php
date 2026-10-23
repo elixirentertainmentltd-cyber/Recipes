@@ -8,9 +8,12 @@ function batch(array $rows, bool $dry = true) { return import_payload(json_encod
 function rejects(callable $test) { try { $test(); } catch (InvalidArgumentException $e) { return; } throw new RuntimeException('Expected validation failure'); }
 $r = ['title'=>'Test scones','category'=>'Baking','ingredients'=>['200g flour'],'instructions'=>['Mix and bake.'],'prep_minutes'=>10,'cook_minutes'=>20,'servings'=>4];
 $file = recipe_data_file();
-$old = ['id'=>'old','slug'=>'old','title'=>'Existing recipe','custom_field'=>'preserve exactly'];
+$old = ['id'=>'old','slug'=>'old','title'=>'Existing recipe','custom_field'=>'preserve exactly','cuisine'=>'British','occasion'=>'Party food','tags'=>['Legacy']];
 file_put_contents($file,json_encode([$old]));
 $before = file_get_contents($file);
+$legacy = $r; $legacy['cuisine']='Old cuisine'; $legacy['occasion']='Old occasion'; $legacy['tags']=['Old tag'];
+$normalised = batch([$legacy]);
+foreach (['cuisine','occasion','tags'] as $field) check(!array_key_exists($field,$normalised['recipes'][0]),'Retired import field was stored');
 $p = import_recipes(batch([$r])); check($p['ready']===1 && $p['added']===0,'Preview counts'); check(file_get_contents($file)===$before,'Preview wrote data');
 $result = import_recipes(batch([$r],false)); check($result['added']===1 && $result['backup_created'],'Import failed');
 $all=json_decode(file_get_contents($file),true); check($all[0]===$old,'Existing data altered'); check($all[1]['method']===['Mix and bake.'],'Instructions mapping');
@@ -32,3 +35,4 @@ $dir=dirname(dirname(__DIR__)).'/elixir-recipes-backups';foreach(glob($dir.'/*')
 try { import_recipes(batch([$image],false)); throw new LogicException('Missing backup accepted'); } catch (RuntimeException $e) { check(!$e instanceof LogicException,'Missing backup accepted'); }
 check(file_get_contents($file)===$before,'Backup failure overwrote data');
 echo "Import tests passed: preview, preservation, backups, duplicates, validation, images, corruption and backup failure.\n";
+

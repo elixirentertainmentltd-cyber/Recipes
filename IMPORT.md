@@ -35,18 +35,20 @@ Send `POST /api/import-recipes.php` over HTTPS with `Authorization: Bearer YOUR_
     "instructions": ["First cooking step"],
     "prep_minutes": 10,
     "cook_minutes": 20,
-    "servings": 4,
-    "tags": ["Family-friendly"]
+    "servings": 4
   }]
 }
 ```
 
 `dry_run` defaults to true. Set false only to publish. Response reports `ready`, `added`, `skipped`, `skipped_titles` and `backup_created`. Retrying an identical successful batch skips its titles. A malformed recipe rejects the batch with 422 before any publication.
 
-Limits: 1–100 recipes, 20 MB JSON, 150 ingredient lines and 100 instruction lines per recipe. Timings are integer minutes, 0–10080; servings are 1–1000. Use the site's exact dish/cuisine/occasion values. `method` is accepted as an alternative to `instructions`. Unknown fields are rejected. Do not include database IDs, slugs or timestamps.
+Limits: 1–100 recipes, 20 MB JSON, 150 ingredient lines and 100 instruction lines per recipe. Timings are integer minutes, 0–10080; servings are 1–1000. Use one of the site's exact dish types for category. `method` is accepted as an alternative to `instructions`. Unknown fields are rejected. Do not include database IDs, slugs or timestamps.
 
 Images: choose optional `image_url` (HTTPS, no embedded credentials; stored by reference and never fetched by the server) or `image_base64` (raw base64 JPG/PNG/WebP, max 2 MB decoded and 20 megapixels). Base64 images are validated and saved under random names in uploads. The total request limit also applies. Do not invent image bytes or rights.
 
 ## Validation
 
 CI runs PHP syntax, existing 13 template scenarios, import tests (preservation, duplicates, dry runs, backup failure, corruption, input validation and image import), and API method/HTTPS/auth/body-limit checks. Before release, test a real authenticated preview → import on staging, verify the generated private backup, confirm Apache forwards bearer headers and check hosting PHP request limits. No live recipes are imported by these tests.
+
+
+Cuisine, occasion and tags have been retired from the site. Older batches containing those fields remain accepted for compatibility, but their values are ignored and are not added to new recipe records. Existing recipes are not migrated or deleted.

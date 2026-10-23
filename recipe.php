@@ -41,7 +41,7 @@ $isIngredientHeading = static function (array $ingredients, int $index): bool {
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#070707">
 <title><?= $recipe ? h($recipe['title'] ?? '') . ' | ' . h($siteName) : 'Recipe not found | ' . h($siteName) ?></title>
 <meta name="description" content="<?= h($recipe['summary'] ?? 'Recipe from Elixir Recipes') ?>">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/styles.css?v=4-print-branding">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/styles.css?v=5-simple-browsing">
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to main content</a><div class="scroll-progress" aria-hidden="true"></div>
@@ -60,11 +60,11 @@ $isIngredientHeading = static function (array $ingredients, int $index): bool {
 <aside class="ingredients-card reveal" id="ingredients"><p class="section-number">Ingredients</p><h2>What you need</h2><ul><?php foreach ($ingredientLines as $ingredientIndex => $ingredient): ?><?php if ($isIngredientHeading($ingredientLines, $ingredientIndex)): ?><?php $heading = preg_replace('/^##\s*/', '', trim((string) $ingredient)); ?><li style="padding:24px 0 8px;border-bottom:0"><strong style="font-family:Manrope,sans-serif;font-size:1.08rem;letter-spacing:-.02em"><?= h(rtrim((string) $heading, ':')) ?></strong></li><?php else: ?><li><label class="ingredient-check"><input type="checkbox"><span><?= h($ingredient) ?></span></label></li><?php endif; ?><?php endforeach; ?></ul></aside>
 <div class="method-card reveal" id="method"><p class="section-number">Method</p><h2>Make it happen</h2><ol><?php foreach (($recipe['method'] ?? []) as $step): ?><li><span><?= h(str_pad((string) (($loopIndex ?? 0) + 1), 2, '0', STR_PAD_LEFT)) ?></span><p><?= h($step) ?></p></li><?php $loopIndex = ($loopIndex ?? 0) + 1; endforeach; ?></ol><?php if (!empty($recipe['notes'])): ?><div class="cook-note"><strong>Cook's note</strong><p><?= nl2br(h($recipe['notes'])) ?></p></div><?php endif; ?></div>
 </section>
-<?php if (!empty($recipe['tags'])): ?><div class="shell tags-row"><?php foreach ($recipe['tags'] as $tag): ?><span>#<?= h($tag) ?></span><?php endforeach; ?></div><?php endif; ?>
 <footer class="print-brand-footer shell"><p>You Batter Believe It by We Are Elixir</p><p>Find more at <a href="https://recipes.weareelixir.co.uk/">https://recipes.weareelixir.co.uk/</a></p></footer>
 </article>
 <?php endif; ?>
 </main>
 <?php require __DIR__ . '/site-footer.php'; ?><script src="/script.js?v=2"></script>
 </body></html>
+
 

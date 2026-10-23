@@ -35,3 +35,8 @@ The home feature follows the latest recipe, with a branded cover for an empty li
 Validation: `php -l` for PHP source, `python3 tests/render.py` for 13 isolated template scenarios, and `node --check script.js`. CI uses PHP 8.3 with mbstring. Tests copy source to a temporary directory and use fixture data, never live storage.
 
 Before release, check 320px, 390px, 768px and desktop layouts, keyboard menus, print preview and the existing authenticated add/edit/upload workflow on staging. Visual browser checks and hosted uploads cannot be confirmed by CLI rendering.
+
+
+## Simplified recipe browsing
+
+Public browsing now uses search and dish type only. Cuisine, occasion and tags have been removed from the public pages, admin forms and advertised API schema. Old query parameters no longer filter results. Older imports can still contain the retired fields; their values are ignored. Editing a recipe preserves any legacy stored metadata without showing it, and new recipes omit these fields. Recipe storage and backups are unchanged.

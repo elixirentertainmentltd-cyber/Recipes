@@ -38,10 +38,16 @@ with tempfile.TemporaryDirectory() as directory:
         assert 'Brought to you by You Batter Believe It' in html
         assert '<script>alert(1)</script>' not in html
         assert 'id="site-nav"' in html and 'Skip to main content' in html
+        for field in ['cuisine','occasion','tag','tags','preset_tags[]']:
+            assert 'name="'+field+'"' not in html
+        assert 'class="tags-row"' not in html and 'class="shell tags-row"' not in html
         return html,page
     html,page=render('index.php'); assert page.cards==2 and 'Pasta &lt;script&gt;' in html
-    for query in [{'q':'chocolate'},{'browse':'category:Baking'},{'tag':'Vegetarian'},{'q':'pasta','browse':'category:Dinner','tag':'Quick & easy'}]:
+    for query in [{'q':'chocolate'},{'browse':'category:Baking'},{'q':'flour'},{'q':'pasta','browse':'category:Dinner'}]:
         html,page=render('index.php',query); assert page.cards==1,query
+    for query in [{'tag':'Vegetarian'},{'browse':'cuisine:Italian'},{'browse':'occasion:Party food'}]:
+        html,page=render('index.php',query); assert page.cards==2,query
+    html,page=render('index.php',{'q':'Italian'}); assert page.cards==0
     html,page=render('index.php',{'q':'no such dish'}); assert page.cards==0 and 'Clear filters' in html
     html,page=render('index.php',recipes=[]); assert page.cards==0 and 'recipe-book-cover' in html
     html,page=render('recipe.php',{'slug':'pasta'}); assert page.checks==2 and 'id="method"' in html and 'Print recipe' in html
@@ -50,4 +56,5 @@ with tempfile.TemporaryDirectory() as directory:
     html,page=render('admin.php',admin=True); assert 'name="ingredients"' in html and 'Publish recipe' in html
     html,page=render('admin.php',{'edit':'a'},admin=True); assert 'Save changes' in html and 'Edit recipe' in html
     html,page=render('admin.php',configured=False); assert 'Setup required' in html
-print('13 render scenarios passed: filters, empty library, recipe, 404, admin login/editor and setup.')
+print('17 render scenarios passed, including retired fields and old filter links.')
+

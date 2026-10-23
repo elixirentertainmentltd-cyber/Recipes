@@ -50,10 +50,10 @@ function import_payload(string $json): array
             if (!is_array($row) || array_is_list($row) || array_diff(array_keys($row), $allowed)) throw new InvalidArgumentException('Unknown recipe fields.');
             if (isset($row['method'], $row['instructions'])) throw new InvalidArgumentException('Use instructions or method, not both.');
             $item = [];
-            foreach (['title'=>160,'summary'=>1000,'category'=>80,'cuisine'=>80,'occasion'=>80,'notes'=>5000] as $key=>$length) {
+            foreach (['title'=>160,'summary'=>1000,'category'=>80,'notes'=>5000] as $key=>$length) {
                 $item[$key] = import_text($row[$key] ?? '', $key, $length, in_array($key, ['title','category'], true));
             }
-            foreach (['category','cuisine','occasion'] as $key) {
+            foreach (['category'] as $key) {
                 if ($item[$key] !== '' && !in_array($item[$key], recipe_browse_options()[$key], true)) throw new InvalidArgumentException("Unsupported $key. Use a category from the site.");
             }
             foreach (['prep_minutes'=>0,'cook_minutes'=>0,'servings'=>1] as $key=>$min) {
@@ -63,9 +63,7 @@ function import_payload(string $json): array
             }
             $item['ingredients'] = import_lines($row['ingredients'] ?? null, 'ingredients', 150);
             $item['method'] = import_lines($row['instructions'] ?? $row['method'] ?? null, 'instructions', 100);
-            $tags = $row['tags'] ?? [];
-            if (!is_array($tags) || !array_is_list($tags) || count($tags) > 30) throw new InvalidArgumentException('Invalid tags.');
-            $item['tags'] = array_values(array_unique(array_map(static fn($tag) => import_text($tag, 'tag', 80, true), $tags)));
+            // Accept deprecated fields in older batches, but do not store or use them.
             $item['image'] = null;
             if (isset($row['image_url'], $row['image_base64'])) throw new InvalidArgumentException('Choose image_url or image_base64.');
             if (isset($row['image_url'])) {
@@ -160,3 +158,4 @@ function import_recipes(array $payload): array
         flock($lock, LOCK_UN); fclose($lock);
     }
 }
+
